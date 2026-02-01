@@ -26,6 +26,14 @@
     {
       "source": "/pages/pricing",
       "destination": "/pricing.html"
+    },
+    {
+      "source": "/pages/dashboard.html",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/pages/dashboard",
+      "destination": "/dashboard.html"
     }
   ],
   "redirects": [
