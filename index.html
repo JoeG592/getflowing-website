@@ -4,19 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get Flowing, eh - AI-Powered Power Automate Flow Generation</title>
-  <meta name="description" content="Turn your ideas into working automation—instantly. No coding required. No technical knowledge needed. Proudly made in Edmonton, Alberta, Canada.">
-  
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%2364748b'/><text x='50' y='70' font-size='50' font-weight='bold' text-anchor='middle' fill='white'>GF</text></svg>">
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; }
-  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -24,274 +15,262 @@
   <script type="text/babel">
     const { useState } = React;
 
-    const Loader2 = ({ className }) => (
-      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-      </svg>
-    );
-
-    const CheckCircle = ({ className }) => (
-      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-      </svg>
-    );
-
-    const AlertCircle = ({ className }) => (
-      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-    );
-
-    const Rocket = ({ className }) => (
-      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
-      </svg>
-    );
-
-    function GetFlowingEh() {
+    function App() {
       const [prompt, setPrompt] = useState('');
-      const [tenantUrl, setTenantUrl] = useState('');
       const [flowName, setFlowName] = useState('');
-      const [loading, setLoading] = useState(false);
-      const [stage, setStage] = useState('');
+      const [dataverseUrl, setDataverseUrl] = useState('');
       const [generatedFlow, setGeneratedFlow] = useState(null);
-      const [deploymentResult, setDeploymentResult] = useState(null);
-      const [error, setError] = useState(null);
-      const [logs, setLogs] = useState([]);
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [progressLog, setProgressLog] = useState([]);
 
       const addLog = (message, type = 'info') => {
-        setLogs(prev => [...prev, { timestamp: new Date().toISOString(), message, type }]);
-      };
-
-      const generateFlowWithBackend = async () => {
-        addLog('🤖 Calling backend API to generate your flow...', 'info');
-        
-        const response = await fetch('/api/generate-flow', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: prompt, flowName: flowName })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (!data.success || !data.flow) {
-          throw new Error('No flow returned from API');
-        }
-
-        addLog('✅ Flow generated successfully!', 'success');
-        return data.flow;
-      };
-
-      const packageFlowAsSolution = (flowDefinition) => {
-        addLog('📦 Packaging your flow...', 'info');
-        const flowId = crypto.randomUUID();
-        const solutionName = (flowName || 'AIGeneratedFlow').replace(/[^a-zA-Z0-9]/g, '');
-        const solution = {
-          workflows: [{ name: flowName || 'AI Generated Flow', definition: flowDefinition, type: 'cloud', id: flowId }],
-          connections: [],
-          connectionReferences: []
-        };
-        addLog('✅ Solution package ready!', 'success');
-        return { solution, flowId, solutionName };
-      };
-
-      const deployFlowToDataverse = async (packagedSolution) => {
-        addLog('🚀 Preparing deployment...', 'info');
-        addLog('⚠️ Download JSON and run PowerShell script', 'warning');
-        return {
-          status: 'demo',
-          message: 'Flow generated successfully! Download the JSON below and run the deployment script.',
-          flowJson: JSON.stringify(packagedSolution.solution.workflows[0].definition, null, 2)
-        };
+        const timestamp = new Date().toLocaleTimeString();
+        setProgressLog(prev => [...prev, { timestamp, message, type }]);
       };
 
       const handleGenerate = async () => {
         if (!prompt.trim()) {
-          setError('Please describe your automation flow');
+          alert('Please describe what you want to automate!');
           return;
         }
 
-        setLoading(true);
-        setError(null);
+        setIsGenerating(true);
         setGeneratedFlow(null);
-        setDeploymentResult(null);
-        setLogs([]);
+        setProgressLog([]);
+
+        addLog('Calling backend API to generate your flow...', 'info');
 
         try {
-          setStage('Generating your flow...');
-          const flowDefinition = await generateFlowWithBackend();
-          setGeneratedFlow(flowDefinition);
+          const response = await fetch('/api/generate-flow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt,
+              flowName: flowName || 'My Automation'
+            })
+          });
 
-          setStage('Packaging solution...');
-          const packagedSolution = packageFlowAsSolution(flowDefinition);
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
 
-          setStage('Preparing deployment...');
-          const deployment = await deployFlowToDataverse(packagedSolution);
-          setDeploymentResult(deployment);
-
-          setStage('Complete!');
-          addLog('🎊 Your flow is ready!', 'success');
-        } catch (err) {
-          setError(err.message);
-          addLog(`❌ Error: ${err.message}`, 'error');
+          const data = await response.json();
+          
+          if (data.success) {
+            addLog('Flow generated successfully!', 'success');
+            addLog('Packaging your flow...', 'info');
+            setGeneratedFlow(data.rawJson);
+            
+            setTimeout(() => {
+              addLog('Solution package ready!', 'success');
+              addLog('Preparing deployment...', 'info');
+            }, 500);
+          } else {
+            throw new Error(data.error || 'Failed to generate flow');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          addLog(`Error: ${error.message}`, 'error');
+          alert('Failed to generate flow. Please try again!');
         } finally {
-          setLoading(false);
+          setIsGenerating(false);
         }
       };
 
-      const downloadFlowJson = () => {
-        if (!deploymentResult?.flowJson) return;
-        const blob = new Blob([deploymentResult.flowJson], { type: 'application/json' });
+      const handleDownload = () => {
+        if (!generatedFlow) return;
+        
+        const blob = new Blob([generatedFlow], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${flowName || 'generated_flow'}.json`;
+        a.download = `${flowName || 'my-automation'}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        addLog('💾 Flow JSON downloaded', 'success');
       };
 
       return (
-        <div className="min-h-screen bg-red-50 p-8">
-          <div className="max-w-5xl mx-auto">
-            
-            <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
-              <div className="flex items-center justify-center gap-6 mb-6">
-                <div className="w-20 h-20 bg-slate-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-4xl font-bold">GF</span>
+        <div className="min-h-screen bg-red-50">
+          {/* Header Navigation */}
+          <div className="bg-white border-b border-gray-900">
+            <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">GF</span>
+                </div>
+                <span className="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
+              </div>
+              <nav className="flex gap-6">
+                <a href="/" className="text-red-600 font-bold">Home</a>
+                <a href="/pages/pricing.html" className="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
+                <a href="#" className="text-gray-700 hover:text-red-600 font-medium">Sign In</a>
+              </nav>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="max-w-5xl mx-auto px-8 py-12">
+            {/* Hero Section */}
+            <div className="bg-white rounded-2xl border-2 border-gray-900 p-12 mb-8 shadow-lg">
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-slate-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white text-3xl font-bold">GF</span>
                 </div>
                 <h1 className="text-5xl font-bold text-red-600">GET FLOWING, EH</h1>
               </div>
-              <div className="text-center max-w-2xl mx-auto">
-                <p className="text-xl text-gray-700 mb-3">TURN YOUR IDEAS INTO WORKING AUTOMATION—INSTANTLY.</p>
-                <p className="text-base text-gray-600">No coding required. No technical knowledge needed. Just tell us what you want automated.</p>
-              </div>
+              <p className="text-2xl text-center text-gray-700 mb-2">
+                TURN YOUR IDEAS INTO WORKING AUTOMATION—INSTANTLY.
+              </p>
+              <p className="text-center text-gray-600">
+                No coding required. No technical knowledge needed. Just tell us what you want automated.
+              </p>
             </div>
 
-            {loading && (
-              <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm border border-gray-900">
-                <div className="flex items-center justify-between mb-4">
-                  {[1,2,3,4,5].map((step, idx) => (
-                    <React.Fragment key={step}>
-                      {idx > 0 && <div className={`h-1 flex-1 mx-2 rounded ${stage.includes(['Generating','Packaging','Authenticating','Preparing','Complete'][idx-1]) ? 'bg-red-600' : 'bg-gray-200'}`}></div>}
-                      <div className="flex flex-col items-center flex-1">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg mb-2 ${
-                          (step === 1 && (stage.includes('Generating') || stage.includes('Packaging') || stage.includes('Authenticating') || stage.includes('Preparing') || stage.includes('Complete'))) ||
-                          (step === 2 && (stage.includes('Packaging') || stage.includes('Authenticating') || stage.includes('Preparing') || stage.includes('Complete'))) ||
-                          (step === 3 && (stage.includes('Authenticating') || stage.includes('Preparing') || stage.includes('Complete'))) ||
-                          (step === 4 && (stage.includes('Preparing') || stage.includes('Complete'))) ||
-                          (step === 5 && stage.includes('Complete'))
-                            ? (step === 5 && stage.includes('Complete') ? 'bg-green-600 text-white' : 'bg-red-600 text-white')
-                            : 'bg-gray-200 text-gray-500'
-                        }`}>
-                          {step === 5 && stage.includes('Complete') ? '✓' : step}
-                        </div>
-                        <span className="text-xs text-gray-600 text-center">{['Generate Flow','Package Solution','Authenticate','Prepare Deploy','Complete'][step-1]}</span>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div className="text-center"><p className="text-sm text-gray-600 font-medium">{stage}</p></div>
-              </div>
-            )}
+            {/* Form Section */}
+            <div className="bg-white rounded-2xl border-2 border-gray-900 p-8 mb-8 shadow-lg">
+              <h2 className="text-2xl font-bold mb-6 text-gray-900">Describe what you want to automate</h2>
+              
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="w-full p-4 border-2 border-gray-900 rounded-xl mb-4 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-600"
+                rows="6"
+                placeholder="Example: When someone fills out my contact form, send me an email and add their info to my spreadsheet"
+              />
 
-            <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
-              <div className="mb-6">
-                <label className="block text-gray-800 mb-3 font-semibold text-lg">Describe what you want to automate</label>
-                <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Example: When someone fills out my contact form, send me an email and add their info to my spreadsheet" className="w-full h-32 p-4 bg-red-50 border border-gray-900 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all resize-none" disabled={loading} />
-              </div>
-              <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-gray-700 mb-2 text-sm font-medium">Flow Name (optional)</label>
-                  <input type="text" value={flowName} onChange={(e) => setFlowName(e.target.value)} placeholder="My Automation" className="w-full p-3 bg-red-50 border border-gray-900 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all" disabled={loading} />
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">
+                    Flow Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={flowName}
+                    onChange={(e) => setFlowName(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600"
+                    placeholder="My Automation"
+                  />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2 text-sm font-medium">Dataverse URL</label>
-                  <input type="text" value={tenantUrl} onChange={(e) => setTenantUrl(e.target.value)} placeholder="https://yourorg.crm.dynamics.com" className="w-full p-3 bg-red-50 border border-gray-900 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all" disabled={loading} />
+                  <label className="block text-sm font-semibold mb-2 text-gray-900">
+                    Dataverse URL
+                  </label>
+                  <input
+                    type="text"
+                    value={dataverseUrl}
+                    onChange={(e) => setDataverseUrl(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600"
+                    placeholder="https://yourorg.crm.dynamics.com"
+                  />
                 </div>
               </div>
-              <button onClick={handleGenerate} disabled={loading} className="w-full bg-red-600 text-white font-semibold py-4 px-8 rounded-xl border border-gray-900 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3 text-lg uppercase tracking-wide">
-                {loading ? (<><Loader2 className="w-5 h-5 animate-spin" />{stage}</>) : (<><Rocket className="w-5 h-5" />Generate My Flow</>)}
+
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className={`w-full py-4 px-6 rounded-xl font-bold text-xl transition-all shadow-lg ${
+                  isGenerating
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-xl'
+                }`}
+              >
+                {isGenerating ? '🔄 GENERATING...' : '🚀 GENERATE MY FLOW'}
               </button>
             </div>
 
-            {error && (
-              <div className="bg-red-100 rounded-xl p-4 mb-6 shadow-sm border border-gray-900">
-                <div className="flex items-center gap-2 text-red-700">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="font-semibold">Error:</span>
-                  <span>{error}</span>
+            {/* Results Section */}
+            {(generatedFlow || progressLog.length > 0) && (
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                {/* Generated Flow */}
+                <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">✅</span>
+                    <h3 className="text-xl font-bold text-gray-900">Generated Flow</h3>
+                  </div>
+                  <pre className="bg-gray-50 p-4 rounded-xl border border-gray-900 overflow-auto max-h-96 text-xs font-mono">
+                    {generatedFlow || 'Generating...'}
+                  </pre>
+                </div>
+
+                {/* Ready to Deploy */}
+                <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">🚀</span>
+                    <h3 className="text-xl font-bold text-gray-900">Ready to Deploy</h3>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-900 mb-4">
+                    <p className="font-semibold mb-1 text-gray-900">Status</p>
+                    <p className="text-lg text-gray-700">DEMO</p>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-900 mb-4">
+                    <p className="font-semibold mb-2 text-gray-900">Next Steps</p>
+                    <p className="text-sm text-gray-700">
+                      Flow generated successfully! Download the JSON below and run the deployment script.
+                    </p>
+                  </div>
+
+                  {generatedFlow && (
+                    <button
+                      onClick={handleDownload}
+                      className="w-full bg-red-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg"
+                    >
+                      📥 DOWNLOAD FLOW JSON
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-6">
-              {generatedFlow && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle className="w-6 h-6 text-red-600" />
-                    <h3 className="text-xl font-semibold text-gray-800">Generated Flow</h3>
-                  </div>
-                  <pre className="bg-red-50 p-4 rounded-xl border border-gray-900 text-gray-800 text-xs overflow-auto max-h-96 font-mono">{JSON.stringify(generatedFlow, null, 2)}</pre>
-                </div>
-              )}
-
-              {deploymentResult && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Rocket className="w-6 h-6 text-red-600" />
-                    <h3 className="text-xl font-semibold text-gray-800">Ready to Deploy</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="bg-red-50 p-4 rounded-xl border border-gray-900">
-                      <div className="text-gray-600 font-medium mb-1">Status</div>
-                      <div className="text-gray-800 font-semibold uppercase">{deploymentResult.status}</div>
-                    </div>
-                    <div className="bg-red-50 p-4 rounded-xl border border-gray-900">
-                      <div className="text-gray-600 font-medium mb-1">Next Steps</div>
-                      <div className="text-gray-800 text-sm">{deploymentResult.message}</div>
-                    </div>
-                    {deploymentResult.flowJson && (
-                      <button onClick={downloadFlowJson} className="w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-xl border border-gray-900 hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-md uppercase tracking-wide">
-                        <span>💾</span>Download Flow JSON
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {logs.length > 0 && (
-              <div className="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Progress Log</h3>
+            {/* Progress Log */}
+            {progressLog.length > 0 && (
+              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">Progress Log</h3>
                 <div className="space-y-2 max-h-64 overflow-auto">
-                  {logs.map((log, idx) => (
-                    <div key={idx} className={`p-3 rounded-xl text-sm ${log.type === 'success' ? 'bg-green-50 text-green-800' : log.type === 'error' ? 'bg-red-100 text-red-800' : log.type === 'warning' ? 'bg-yellow-50 text-yellow-800' : 'bg-red-50 text-gray-700'}`}>
-                      <span className="text-xs opacity-70 font-mono">{new Date(log.timestamp).toLocaleTimeString()}</span> - {log.message}
+                  {progressLog.map((log, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-lg border ${
+                        log.type === 'success'
+                          ? 'bg-green-50 border-green-600 text-green-800'
+                          : log.type === 'error'
+                          ? 'bg-red-50 border-red-600 text-red-800'
+                          : 'bg-blue-50 border-blue-600 text-blue-800'
+                      }`}
+                    >
+                      <span className="text-xs font-mono opacity-75">{log.timestamp} p.m.</span>
+                      <span className="ml-2">
+                        {log.type === 'success' && '✅'}
+                        {log.type === 'error' && '❌'}
+                        {log.type === 'info' && '🔄'}
+                      </span>
+                      <span className="ml-2">{log.message}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+          </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-600 text-sm mb-1">Proudly made in Edmonton, Alberta, Canada 🇨🇦</p>
-              <p className="text-gray-500 text-xs">Powered by Claude AI • Built for Power Automate</p>
+          {/* Footer */}
+          <div className="mt-20 border-t border-gray-900 bg-white">
+            <div className="max-w-7xl mx-auto px-8 py-8 text-center">
+              <p className="text-gray-600 text-sm mb-1">
+                Proudly made in Edmonton, Alberta, Canada 🇨🇦
+              </p>
+              <p className="text-gray-500 text-xs">
+                Powered by Claude AI • Built for Power Automate
+              </p>
             </div>
           </div>
         </div>
       );
     }
 
-    ReactDOM.render(<GetFlowingEh />, document.getElementById('root'));
+    ReactDOM.render(<App />, document.getElementById('root'));
   </script>
-</body>
-</html>
 </body>
 </html>
