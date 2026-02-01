@@ -8,12 +8,14 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Clerk -->
+  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
     function App() {
       const [prompt, setPrompt] = useState('');
@@ -22,6 +24,22 @@
       const [generatedFlow, setGeneratedFlow] = useState(null);
       const [isGenerating, setIsGenerating] = useState(false);
       const [progressLog, setProgressLog] = useState([]);
+      const [user, setUser] = useState(null);
+      const [usage, setUsage] = useState(null);
+
+      useEffect(() => {
+        initClerk();
+      }, []);
+
+      const initClerk = async () => {
+        await Clerk.load();
+        setUser(Clerk.user);
+        
+        if (Clerk.user) {
+          // TODO: Fetch real usage from backend
+          setUsage({ tier: 'free', used: 0, limit: 3, remaining: 3 });
+        }
+      };
 
       const addLog = (message, type = 'info') => {
         const timestamp = new Date().toLocaleTimeString();
@@ -29,6 +47,22 @@
       };
 
       const handleGenerate = async () => {
+        // Check if user is signed in
+        if (!user) {
+          if (confirm('You need to sign in to generate flows. Sign in now?')) {
+            window.location.href = '/pages/signin.html';
+          }
+          return;
+        }
+
+        // Check usage limits
+        if (usage && usage.remaining <= 0) {
+          if (confirm(`You've used all ${usage.limit} flows this month. Upgrade to Pro for 50 flows/month?`)) {
+            window.location.href = '/pages/pricing.html';
+          }
+          return;
+        }
+
         if (!prompt.trim()) {
           alert('Please describe what you want to automate!');
           return;
@@ -46,20 +80,30 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               prompt,
-              flowName: flowName || 'My Automation'
+              flowName: flowName || 'My Automation',
+              userId: user.id
             })
           });
 
-          if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-          }
-
           const data = await response.json();
           
+          if (data.upgradeRequired) {
+            addLog('Usage limit reached!', 'error');
+            if (confirm(`You've reached your ${data.tier} tier limit. Upgrade to continue?`)) {
+              window.location.href = '/pages/pricing.html';
+            }
+            return;
+          }
+
           if (data.success) {
             addLog('Flow generated successfully!', 'success');
             addLog('Packaging your flow...', 'info');
             setGeneratedFlow(data.rawJson);
+            
+            // Update usage
+            if (data.usage) {
+              setUsage(data.usage);
+            }
             
             setTimeout(() => {
               addLog('Solution package ready!', 'success');
@@ -91,6 +135,12 @@
         URL.revokeObjectURL(url);
       };
 
+      const handleSignOut = async () => {
+        await Clerk.signOut();
+        setUser(null);
+        setUsage(null);
+      };
+
       return (
         <div className="min-h-screen bg-red-50">
           {/* Header Navigation */}
@@ -102,10 +152,20 @@
                 </div>
                 <span className="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
               </div>
-              <nav className="flex gap-6">
+              <nav className="flex gap-6 items-center">
                 <a href="/" className="text-red-600 font-bold">Home</a>
                 <a href="/pages/pricing.html" className="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
-                <a href="#" className="text-gray-700 hover:text-red-600 font-medium">Sign In</a>
+                {user ? (
+                  <>
+                    <a href="/pages/dashboard.html" className="text-gray-700 hover:text-red-600 font-medium">Dashboard</a>
+                    <button onClick={handleSignOut} className="text-gray-700 hover:text-red-600 font-medium">Sign Out</button>
+                  </>
+                ) : (
+                  <>
+                    <a href="/pages/signin.html" className="text-gray-700 hover:text-red-600 font-medium">Sign In</a>
+                    <a href="/pages/signup.html" className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700">Sign Up Free</a>
+                  </>
+                )}
               </nav>
             </div>
           </div>
@@ -127,6 +187,26 @@
                 No coding required. No technical knowledge needed. Just tell us what you want automated.
               </p>
             </div>
+
+            {/* Usage Banner (if logged in) */}
+            {user && usage && (
+              <div className="bg-white rounded-xl border-2 border-gray-900 p-4 mb-4 flex items-center justify-between shadow">
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl">👤</span>
+                  <div>
+                    <p className="font-bold text-gray-900">Welcome back, {user.firstName}!</p>
+                    <p className="text-sm text-gray-600">
+                      {usage.remaining} of {usage.limit} flows remaining this month ({usage.tier} tier)
+                    </p>
+                  </div>
+                </div>
+                {usage.remaining < 2 && usage.tier === 'free' && (
+                  <a href="/pages/pricing.html" className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 text-sm">
+                    Upgrade to Pro
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Form Section */}
             <div className="bg-white rounded-2xl border-2 border-gray-900 p-8 mb-8 shadow-lg">
@@ -176,8 +256,14 @@
                     : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-xl'
                 }`}
               >
-                {isGenerating ? '🔄 GENERATING...' : '🚀 GENERATE MY FLOW'}
+                {isGenerating ? '🔄 GENERATING...' : user ? '🚀 GENERATE MY FLOW' : '🔒 SIGN IN TO GENERATE'}
               </button>
+
+              {!user && (
+                <p className="text-center mt-4 text-gray-600 text-sm">
+                  <a href="/pages/signup.html" className="text-red-600 font-bold hover:underline">Sign up free</a> to start generating flows!
+                </p>
+              )}
             </div>
 
             {/* Results Section */}

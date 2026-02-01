@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing - Get Flowing, eh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Clerk -->
+  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const CheckIcon = () => (
+      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    );
+
+    function PricingPage() {
+      const [billingPeriod, setBillingPeriod] = useState('monthly');
+      const [user, setUser] = useState(null);
+
+      useEffect(() => {
+        initClerk();
+      }, []);
+
+      const initClerk = async () => {
+        await Clerk.load();
+        setUser(Clerk.user);
+      };
+
+      const plans = [
+        {
+          name: 'Free',
+          price: { monthly: 0, yearly: 0 },
+          description: 'Perfect for trying out Get Flowing',
+          features: [
+            '3 flows per month',
+            'Basic flow generation',
+            'Community support',
+            'Power Automate export',
+            'Email support'
+          ],
+          limitations: [
+            'Basic connectors only',
+            'Standard processing speed'
+          ],
+          cta: 'Get Started Free',
+          ctaLink: '/pages/signup.html',
+          highlighted: false,
+          stripePrice: null
+        },
+        {
+          name: 'Pro',
+          price: { monthly: 39, yearly: 390 },
+          description: 'For professionals and growing teams',
+          features: [
+            '50 flows per month',
+            'Advanced AI generation',
+            'All connectors supported',
+            'Priority processing',
+            'Email support',
+            'Flow templates library',
+            'Custom connectors',
+            'Version history',
+            'Export to multiple formats'
+          ],
+          cta: 'Start Pro Trial',
+          ctaLink: '/checkout?plan=pro',
+          highlighted: true,
+          stripePrice: {
+            monthly: 'price_1Sw90541BcLCvAWApMqY0wtO',
+            yearly: 'price_1Sw90541BcLCvAWApMqY0wtO'
+          },
+          badge: 'Most Popular'
+        },
+        {
+          name: 'Enterprise',
+          price: { monthly: 399, yearly: 3990 },
+          description: 'For large teams and organizations',
+          features: [
+            'Unlimited flows',
+            'Premium AI models',
+            'All Pro features',
+            'Dedicated support',
+            'SLA guarantee (99.9%)',
+            'Custom integrations',
+            'White-label option',
+            'Multi-user accounts',
+            'API access',
+            'Advanced analytics',
+            'Custom training',
+            'On-premise deployment option'
+          ],
+          cta: 'Contact Sales',
+          ctaLink: '/contact',
+          highlighted: false,
+          stripePrice: {
+            monthly: 'price_1Sw92j41BcLCvAWAenoZa59D',
+            yearly: 'price_1Sw92j41BcLCvAWAenoZa59D'
+          },
+          badge: 'Best Value'
+        }
+      ];
+
+      const handleSubscribe = async (plan) => {
+        if (plan.name === 'Free') {
+          window.location.href = '/pages/signup.html';
+          return;
+        }
+
+        if (plan.name === 'Enterprise') {
+          alert('Contact sales@getflowing.io for Enterprise plans');
+          return;
+        }
+
+        // Check if user is signed in
+        if (!user) {
+          if (confirm('You need to sign in first. Sign in now?')) {
+            window.location.href = `/pages/signin.html?redirect=/pages/pricing.html`;
+          }
+          return;
+        }
+
+        // Call Stripe checkout
+        const priceId = plan.stripePrice[billingPeriod];
+        
+        try {
+          const response = await fetch('/api/stripe/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              priceId: priceId,
+              tier: plan.name.toLowerCase()
+            })
+          });
+
+          const data = await response.json();
+          
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert('Failed to create checkout session. Please try again.');
+          }
+        } catch (error) {
+          console.error('Checkout error:', error);
+          alert('Failed to start checkout. Please try again.');
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-red-50">
+          {/* Header */}
+          <div className="bg-white border-b border-gray-900">
+            <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">GF</span>
+                </div>
+                <span className="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
+              </div>
+              <nav className="flex gap-6">
+                <a href="/" className="text-gray-700 hover:text-red-600 font-medium">Home</a>
+                <a href="/pages/pricing.html" className="text-red-600 font-bold">Pricing</a>
+                {user ? (
+                  <a href="/pages/dashboard.html" className="text-gray-700 hover:text-red-600 font-medium">Dashboard</a>
+                ) : (
+                  <a href="/pages/signin.html" className="text-gray-700 hover:text-red-600 font-medium">Sign In</a>
+                )}
+              </nav>
+            </div>
+          </div>
+
+          {/* Hero */}
+          <div className="max-w-7xl mx-auto px-8 py-16 text-center">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              SIMPLE, TRANSPARENT PRICING
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Start free, upgrade when you need more. No hidden fees. Cancel anytime.
+            </p>
+
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 mb-12">
+              <span className={`font-medium ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
+                Monthly
+              </span>
+              <button
+                onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'yearly' : 'monthly')}
+                className="relative w-14 h-7 bg-red-600 rounded-full transition-all"
+              >
+                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${billingPeriod === 'yearly' ? 'translate-x-8' : 'translate-x-1'}`} />
+              </button>
+              <span className={`font-medium ${billingPeriod === 'yearly' ? 'text-gray-900' : 'text-gray-500'}`}>
+                Yearly
+              </span>
+              {billingPeriod === 'yearly' && (
+                <span className="ml-2 px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                  Save 17%
+                </span>
+              )}
+            </div>
+
+            {/* Pricing Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`bg-white rounded-2xl p-8 border-2 relative ${
+                    plan.highlighted
+                      ? 'border-red-600 shadow-2xl scale-105'
+                      : 'border-gray-900 shadow-lg'
+                  }`}
+                >
+                  {plan.badge && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold">
+                        {plan.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                    <div className="mb-4">
+                      <span className="text-5xl font-bold text-gray-900">
+                        ${billingPeriod === 'monthly' ? plan.price.monthly : Math.floor(plan.price.yearly / 12)}
+                      </span>
+                      <span className="text-gray-600">/month</span>
+                    </div>
+                    {billingPeriod === 'yearly' && plan.price.yearly > 0 && (
+                      <p className="text-sm text-gray-500">
+                        ${plan.price.yearly} billed annually
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleSubscribe(plan)}
+                    className={`w-full py-3 px-6 rounded-xl font-bold text-lg mb-6 transition-all ${
+                      plan.highlighted
+                        ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-900'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+
+                  <div className="space-y-3">
+                    {plan.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <CheckIcon />
+                        <span className="text-gray-700 text-sm">{feature}</span>
+                      </div>
+                    ))}
+                    {plan.limitations && plan.limitations.map((limitation, idx) => (
+                      <div key={idx} className="flex items-start gap-3 opacity-50">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span className="text-gray-500 text-sm line-through">{limitation}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* FAQ Section */}
+            <div className="mt-20 max-w-3xl mx-auto text-left">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl p-6 border border-gray-900">
+                  <h3 className="font-bold text-lg mb-2">Can I change plans later?</h3>
+                  <p className="text-gray-600">Yes! You can upgrade or downgrade at any time. Changes take effect immediately.</p>
+                </div>
+                <div className="bg-white rounded-xl p-6 border border-gray-900">
+                  <h3 className="font-bold text-lg mb-2">What happens when I hit my flow limit?</h3>
+                  <p className="text-gray-600">You'll be prompted to upgrade. Your existing flows remain accessible, but you won't be able to generate new ones until you upgrade or wait for your monthly reset.</p>
+                </div>
+                <div className="bg-white rounded-xl p-6 border border-gray-900">
+                  <h3 className="font-bold text-lg mb-2">Do you offer refunds?</h3>
+                  <p className="text-gray-600">Yes! We offer a 30-day money-back guarantee. No questions asked.</p>
+                </div>
+                <div className="bg-white rounded-xl p-6 border border-gray-900">
+                  <h3 className="font-bold text-lg mb-2">Is there a contract?</h3>
+                  <p className="text-gray-600">Nope! All plans are month-to-month (or yearly if you choose). Cancel anytime with no penalty.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-20 bg-white rounded-2xl p-12 border-2 border-gray-900 shadow-xl">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Ready to Get Flowing? 🇨🇦
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                Join hundreds of Power Platform developers automating smarter, not harder.
+              </p>
+              <button
+                onClick={() => window.location.href = '/pages/signup.html'}
+                className="bg-red-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition-all shadow-lg"
+              >
+                Start Free Today
+              </button>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-20 border-t border-gray-900 bg-white">
+            <div className="max-w-7xl mx-auto px-8 py-8 text-center">
+              <p className="text-gray-600 text-sm mb-1">
+                Proudly made in Edmonton, Alberta, Canada 🇨🇦
+              </p>
+              <p className="text-gray-500 text-xs">
+                Powered by Claude AI • Built for Power Automate
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<PricingPage />, document.getElementById('root'));
+  </script>
+</body>
+</html>

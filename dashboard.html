@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Get Flowing, eh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Clerk -->
+  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Dashboard() {
+      const [user, setUser] = useState(null);
+      const [usage, setUsage] = useState({ tier: 'free', used: 0, limit: 3, remaining: 3 });
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        initClerk();
+      }, []);
+
+      const initClerk = async () => {
+        await Clerk.load();
+        
+        if (!Clerk.user) {
+          window.location.href = '/pages/signin.html';
+          return;
+        }
+
+        setUser(Clerk.user);
+        
+        // TODO: Fetch actual usage from backend
+        // For now, using mock data
+        setUsage({
+          tier: 'free',
+          used: 0,
+          limit: 3,
+          remaining: 3
+        });
+        
+        setLoading(false);
+      };
+
+      const handleSignOut = async () => {
+        await Clerk.signOut();
+        window.location.href = '/';
+      };
+
+      const handleUpgrade = async () => {
+        // Redirect to pricing
+        window.location.href = '/pages/pricing.html';
+      };
+
+      if (loading) {
+        return (
+          <div className="min-h-screen bg-red-50 flex items-center justify-center">
+            <div className="text-2xl font-bold text-gray-600">Loading...</div>
+          </div>
+        );
+      }
+
+      const tierLimits = {
+        free: 3,
+        pro: 50,
+        enterprise: 999999
+      };
+
+      const usagePercentage = (usage.used / usage.limit) * 100;
+
+      return (
+        <div className="min-h-screen bg-red-50">
+          {/* Header */}
+          <div className="bg-white border-b border-gray-900">
+            <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">GF</span>
+                </div>
+                <span className="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
+              </div>
+              <nav className="flex gap-6 items-center">
+                <a href="/" className="text-gray-700 hover:text-red-600 font-medium">Home</a>
+                <a href="/pages/pricing.html" className="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
+                <a href="/pages/dashboard.html" className="text-red-600 font-bold">Dashboard</a>
+                <button onClick={handleSignOut} className="text-gray-700 hover:text-red-600 font-medium">
+                  Sign Out
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="max-w-7xl mx-auto px-8 py-12">
+            {/* Welcome Section */}
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Welcome back, {user?.firstName || 'there'}! 👋
+              </h1>
+              <p className="text-gray-600">Manage your flows and subscription</p>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-6 mb-8">
+              {/* Usage Card */}
+              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Monthly Usage</h3>
+                  <span className="text-2xl">📊</span>
+                </div>
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900">{usage.used}</span>
+                    <span className="text-gray-600">/ {usage.limit} flows</span>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div 
+                    className={`h-3 rounded-full ${usagePercentage > 80 ? 'bg-red-600' : 'bg-green-600'}`}
+                    style={{ width: `${usagePercentage}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-600">{usage.remaining} flows remaining this month</p>
+              </div>
+
+              {/* Plan Card */}
+              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Current Plan</h3>
+                  <span className="text-2xl">💎</span>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-red-600 uppercase">{usage.tier}</span>
+                </div>
+                {usage.tier === 'free' && (
+                  <button 
+                    onClick={handleUpgrade}
+                    className="w-full bg-red-600 text-white py-2 px-4 rounded-xl font-bold hover:bg-red-700 transition-all"
+                  >
+                    Upgrade to Pro
+                  </button>
+                )}
+                {usage.tier !== 'free' && (
+                  <p className="text-sm text-gray-600">Next billing: Feb 28, 2026</p>
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
+                  <span className="text-2xl">⚡</span>
+                </div>
+                <div className="space-y-3">
+                  <a 
+                    href="/"
+                    className="block w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all text-center border border-gray-900"
+                  >
+                    Generate Flow
+                  </a>
+                  <a 
+                    href="/pages/pricing.html"
+                    className="block w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all text-center border border-gray-900"
+                  >
+                    View Pricing
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Upgrade Banner (if free tier) */}
+            {usage.tier === 'free' && usage.remaining < 2 && (
+              <div className="bg-red-600 text-white rounded-2xl p-6 mb-8 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2">⚠️ Running Low on Flows!</h3>
+                    <p className="text-red-100">
+                      You only have {usage.remaining} flow{usage.remaining !== 1 ? 's' : ''} left this month. 
+                      Upgrade to Pro for 50 flows/month!
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handleUpgrade}
+                    className="bg-white text-red-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-all whitespace-nowrap"
+                  >
+                    Upgrade Now
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-2xl border-2 border-gray-900 p-8 shadow-lg">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Recent Flows</h3>
+              <div className="text-center py-12 text-gray-500">
+                <span className="text-6xl mb-4 block">📭</span>
+                <p className="text-lg">No flows generated yet</p>
+                <p className="text-sm mt-2">Start by creating your first automation!</p>
+                <a 
+                  href="/"
+                  className="inline-block mt-4 bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-all"
+                >
+                  Generate Your First Flow
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-20 border-t border-gray-900 bg-white">
+            <div className="max-w-7xl mx-auto px-8 py-8 text-center">
+              <p className="text-gray-600 text-sm mb-1">
+                Proudly made in Edmonton, Alberta, Canada 🇨🇦
+              </p>
+              <p className="text-gray-500 text-xs">
+                Powered by Claude AI • Built for Power Automate
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>

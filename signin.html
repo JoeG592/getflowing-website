@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Get Flowing, eh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Clerk -->
+  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+<body>
+  <div class="min-h-screen bg-red-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-900">
+      <div class="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+            <span class="text-white text-2xl font-bold">GF</span>
+          </div>
+          <span class="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
+        </div>
+        <nav class="flex gap-6">
+          <a href="/" class="text-gray-700 hover:text-red-600 font-medium">Home</a>
+          <a href="/pages/pricing.html" class="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
+          <a href="/pages/signup.html" class="text-red-600 font-bold">Sign Up</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-md mx-auto px-8 py-16">
+      <div class="bg-white rounded-2xl border-2 border-gray-900 p-8 shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Welcome Back!</h1>
+        <p class="text-gray-600 text-center mb-8">Sign in to continue generating flows</p>
+        
+        <!-- Clerk Sign In Component -->
+        <div id="sign-in"></div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="mt-8 text-center">
+        <p class="text-gray-600 text-sm">
+          Don't have an account? 
+          <a href="/pages/signup.html" class="text-red-600 font-semibold hover:underline">Sign Up Free</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', async () => {
+      await Clerk.load();
+      
+      const signInDiv = document.getElementById('sign-in');
+      
+      Clerk.mountSignIn(signInDiv, {
+        afterSignInUrl: '/pages/dashboard.html',
+        redirectUrl: '/pages/dashboard.html'
+      });
+    });
+  </script>
+</body>
+</html>
