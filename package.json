@@ -1,0 +1,32 @@
+{
+  "name": "getflowing-website",
+  "version": "1.0.0",
+  "description": "AI-powered Power Automate flow generation SaaS - Turn your ideas into working automation instantly",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel --prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JoeG592/getflowing-website"
+  },
+  "keywords": [
+    "power-automate",
+    "automation",
+    "ai",
+    "saas",
+    "claude",
+    "flow-generation"
+  ],
+  "author": "Joe Green",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/postgres": "^0.5.1",
+    "stripe": "^14.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
