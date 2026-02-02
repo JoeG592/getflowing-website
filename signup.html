@@ -4,19 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - Get Flowing</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fef2f2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    nav {
+      background: white;
+      border-bottom: 2px solid #1f2937;
+      padding: 1rem 2rem;
+    }
+    .nav-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: #64748b;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #dc2626;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 2px solid #1f2937;
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 2rem;
+      font-size: 28px;
+    }
+    #clerk-signup {
+      min-height: 400px;
+    }
+  </style>
 </head>
 <body>
-  <script>
-    // Redirect to Clerk's hosted sign-up page
-    const redirectUrl = encodeURIComponent(window.location.origin + '/dashboard-static.html');
-    window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-up?redirect_url=' + redirectUrl;
-  </script>
-  
-  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif;">
-    <div style="text-align: center;">
-      <h2 style="color: #333; margin-bottom: 1rem;">Redirecting to sign up...</h2>
-      <p style="color: #666;">If you're not redirected, <a href="https://vocal-sunbeam-28.clerk.accounts.dev/sign-up" style="color: #dc2626;">click here</a>.</p>
+
+  <nav>
+    <div class="nav-content">
+      <div class="logo">GF</div>
+      <div class="title">GET FLOWING, EH</div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Get Started Free</h2>
+      <div id="clerk-signup"></div>
     </div>
   </div>
+
+  <!-- Clerk Script with correct key -->
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk"
+    src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    onload="initClerk()"
+  ></script>
+
+  <script>
+    window.initClerk = async function() {
+      try {
+        if (!window.Clerk) {
+          console.error('Clerk not loaded');
+          return;
+        }
+
+        await window.Clerk.load();
+        
+        const signUpDiv = document.getElementById('clerk-signup');
+        
+        if (window.Clerk.mountSignUp) {
+          window.Clerk.mountSignUp(signUpDiv, {
+            afterSignUpUrl: '/dashboard-static.html',
+            signInUrl: '/signin.html'
+          });
+        } else {
+          // Fallback: redirect to hosted page
+          window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-up';
+        }
+      } catch (error) {
+        console.error('Clerk initialization error:', error);
+        document.getElementById('clerk-signup').innerHTML = 
+          '<div style="text-align: center; padding: 2rem;"><p style="color: #dc2626; margin-bottom: 1rem;">Unable to load sign-up form.</p><a href="https://vocal-sunbeam-28.clerk.accounts.dev/sign-up" style="color: #dc2626; text-decoration: underline;">Click here to sign up</a></div>';
+      }
+    };
+  </script>
+
 </body>
 </html>
