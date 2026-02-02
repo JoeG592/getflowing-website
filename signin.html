@@ -4,21 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In - Get Flowing</title>
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-red-50 min-h-screen flex items-center justify-center">
-  
-  <div class="max-w-md w-full mx-auto px-6">
-    <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-900 text-center">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Redirecting to Sign In...</h2>
-      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-    </div>
-  </div>
-
+<body>
   <script>
     // Redirect to Clerk's hosted sign-in page
-    window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-in?redirect_url=' + encodeURIComponent(window.location.origin + '/dashboard-static.html');
+    const redirectUrl = encodeURIComponent(window.location.origin + '/dashboard-static.html');
+    window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-in?redirect_url=' + redirectUrl;
   </script>
-
+  
+  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif;">
+    <div style="text-align: center;">
+      <h2 style="color: #333; margin-bottom: 1rem;">Redirecting to sign in...</h2>
+      <p style="color: #666;">If you're not redirected, <a href="https://vocal-sunbeam-28.clerk.accounts.dev/sign-in" style="color: #dc2626;">click here</a>.</p>
+    </div>
+  </div>
 </body>
 </html>
