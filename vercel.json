@@ -4,6 +4,14 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/signin",
+      "destination": "/signin.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/signup.html"
+    },
+    {
       "source": "/pages/signup.html",
       "destination": "/signup.html"
     },
