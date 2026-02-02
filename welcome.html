@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome - Get Flowing</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+      border: 2px solid #1f2937;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: #64748b;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: white;
+      font-weight: bold;
+      font-size: 36px;
+    }
+    h1 {
+      color: #dc2626;
+      font-size: 32px;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .subtitle {
+      color: #1f2937;
+      font-size: 24px;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    p {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: #dc2626;
+      color: white;
+      padding: 1rem 3rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 18px;
+      transition: all 0.2s;
+      border: 2px solid #1f2937;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+    .btn-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+    }
+    .checkmark {
+      font-size: 64px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">GF</div>
+    <div class="checkmark">✅</div>
+    <h1>GET FLOWING, EH</h1>
+    <div class="subtitle">You're All Set!</div>
+    <p>
+      Your account has been created successfully. 
+      You're ready to start automating your workflows with AI-powered flow generation.
+    </p>
+    <a href="/dashboard-static.html" class="btn-primary">
+      Go to Dashboard →
+    </a>
+  </div>
+
+  <script>
+    // Optional: Auto-redirect after 3 seconds
+    // Uncomment if you want automatic redirect
+    // setTimeout(() => {
+    //   window.location.href = '/dashboard-static.html';
+    // }, 3000);
+  </script>
+
+</body>
+</html>
