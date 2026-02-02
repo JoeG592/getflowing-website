@@ -11,43 +11,8 @@
       background: #fef2f2;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-    }
-    nav {
-      background: white;
-      border-bottom: 2px solid #1f2937;
-      padding: 1rem 2rem;
-    }
-    .nav-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .logo {
-      width: 48px;
-      height: 48px;
-      background: #64748b;
-      border-radius: 12px;
-      display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 24px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: bold;
-      color: #dc2626;
-    }
-    .container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
     }
     .card {
       background: white;
@@ -55,21 +20,9 @@
       padding: 3rem;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       border: 2px solid #1f2937;
-      max-width: 500px;
-      width: 100%;
-      min-height: 500px;
-    }
-    h2 {
       text-align: center;
-      color: #1f2937;
-      margin-bottom: 2rem;
-      font-size: 28px;
     }
-    .loading {
-      text-align: center;
-      color: #666;
-      padding: 2rem;
-    }
+    h2 { color: #1f2937; margin-bottom: 1rem; }
     .spinner {
       border: 3px solid #f3f3f3;
       border-top: 3px solid #dc2626;
@@ -86,35 +39,15 @@
   </style>
 </head>
 <body>
-
-  <nav>
-    <div class="nav-content">
-      <a href="/" style="display: flex; align-items: center; gap: 1rem; text-decoration: none;">
-        <div class="logo">GF</div>
-        <div class="title">GET FLOWING, EH</div>
-      </a>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div class="card">
-      <h2>Get Started Free</h2>
-      <div id="clerk-signup">
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>Redirecting to sign up...</p>
-        </div>
-      </div>
-    </div>
+  <div class="card">
+    <h2>Redirecting to Sign Up...</h2>
+    <div class="spinner"></div>
+    <p style="color: #666;">Taking you to secure registration...</p>
   </div>
 
   <script>
-    // Immediately redirect to Clerk's hosted page
-    setTimeout(() => {
-      const redirectUrl = encodeURIComponent(window.location.origin + '/dashboard-static.html');
-      window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-up?redirect_url=' + redirectUrl;
-    }, 1000);
+    // Redirect to Clerk WITHOUT redirect_url - let Clerk use its default
+    window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-up';
   </script>
-
 </body>
 </html>
