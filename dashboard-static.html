@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Get Flowing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-red-50 min-h-screen">
+
+  <nav class="bg-white border-b border-gray-900 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-slate-600 rounded-xl flex items-center justify-center">
+            <span class="text-white text-2xl font-bold">GF</span>
+          </div>
+          <h1 class="text-2xl font-bold text-red-600">GET FLOWING, EH</h1>
+        </div>
+        
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-gray-700 hover:text-red-600 font-medium">Home</a>
+          <a href="/pricing.html" class="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
+          <a href="/pages/dashboard.html" class="text-red-600 font-bold">Dashboard</a>
+          <a href="/pages/signin.html" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+            Sign In
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    
+    <div id="content">
+      
+      <!-- Welcome -->
+      <div class="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome to Get Flowing! 👋</h2>
+        <p class="text-gray-600">Your automation dashboard</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Current Plan</h3>
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+              <span class="text-2xl">💎</span>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-red-600 mb-2">Free</p>
+          <p class="text-sm text-gray-600">3 flows per month</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Flows Generated</h3>
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span class="text-2xl">⚡</span>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mb-2">0 / 3</p>
+          <p class="text-sm text-gray-600">This month</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Account Status</h3>
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <span class="text-2xl">✓</span>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-green-600 mb-2">Ready</p>
+          <p class="text-sm text-gray-600">Start creating flows</p>
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <a href="/" class="bg-red-600 text-white p-6 rounded-xl hover:bg-red-700 transition-colors border border-gray-900 flex items-center justify-between group">
+            <div>
+              <h4 class="text-xl font-bold mb-2">Generate New Flow</h4>
+              <p class="text-red-100">Create automation from natural language</p>
+            </div>
+            <span class="text-3xl group-hover:translate-x-2 transition-transform">→</span>
+          </a>
+
+          <a href="/pricing.html" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-colors border border-gray-900 flex items-center justify-between group">
+            <div>
+              <h4 class="text-xl font-bold mb-2">Upgrade to Pro</h4>
+              <p class="text-purple-100">50 flows/month + priority support</p>
+            </div>
+            <span class="text-3xl group-hover:translate-x-2 transition-transform">💫</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Feature Overview -->
+      <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-900">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Getting Started</h3>
+        
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+              1
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">Describe Your Automation</h4>
+              <p class="text-gray-600">Tell us what you want to automate in plain English</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+              2
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">AI Generates Your Flow</h4>
+              <p class="text-gray-600">Our AI creates a complete Power Automate flow definition</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+              3
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-1">Deploy to Your Tenant</h4>
+              <p class="text-gray-600">Download the flow and import it into your Power Platform environment</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200">
+          <a href="/" class="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+            <span>Try It Now</span>
+            <span>→</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
