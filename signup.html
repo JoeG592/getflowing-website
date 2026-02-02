@@ -3,61 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - Get Flowing, eh</title>
+  <title>Sign Up - Get Flowing</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Clerk -->
-  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
 </head>
-<body>
-  <div class="min-h-screen bg-red-50">
-    <!-- Header -->
-    <div class="bg-white border-b border-gray-900">
-      <div class="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+<body class="bg-red-50 min-h-screen">
+
+  <!-- Navigation -->
+  <nav class="bg-white border-b border-gray-900 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-slate-600 rounded-xl flex items-center justify-center">
             <span class="text-white text-2xl font-bold">GF</span>
           </div>
-          <span class="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
-        </div>
-        <nav class="flex gap-6">
+          <h1 class="text-2xl font-bold text-red-600">GET FLOWING, EH</h1>
+        </a>
+        
+        <div class="flex items-center gap-6">
           <a href="/" class="text-gray-700 hover:text-red-600 font-medium">Home</a>
-          <a href="/pages/pricing.html" class="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
-          <a href="/pages/signin.html" class="text-gray-700 hover:text-red-600 font-medium">Sign In</a>
-        </nav>
+          <a href="/pricing.html" class="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
+          <a href="/signin.html" class="text-gray-700 hover:text-red-600 font-medium">
+            Sign In
+          </a>
+        </div>
       </div>
     </div>
+  </nav>
 
-    <!-- Main Content -->
-    <div class="max-w-md mx-auto px-8 py-16">
-      <div class="bg-white rounded-2xl border-2 border-gray-900 p-8 shadow-lg">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Create Your Account</h1>
-        <p class="text-gray-600 text-center mb-8">Start generating AI-powered flows today!</p>
-        
-        <!-- Clerk Sign Up Component -->
-        <div id="sign-up"></div>
-      </div>
+  <!-- Main Content -->
+  <div class="max-w-md mx-auto px-6 py-12">
+    
+    <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-900">
+      
+      <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">Get Started Free</h2>
+      <p class="text-gray-600 mb-8 text-center">Create your account and start automating</p>
+      
+      <!-- Clerk Sign Up Component -->
+      <div id="clerk-signup"></div>
 
-      <!-- Footer Info -->
-      <div class="mt-8 text-center">
-        <p class="text-gray-600 text-sm">
+      <div class="mt-6 text-center">
+        <p class="text-gray-600">
           Already have an account? 
-          <a href="/pages/signin.html" class="text-red-600 font-semibold hover:underline">Sign In</a>
+          <a href="/signin.html" class="text-red-600 font-semibold hover:text-red-700">Sign in</a>
         </p>
       </div>
+
     </div>
+
   </div>
+
+  <!-- Clerk Script -->
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk"
+    onload="window.Clerk.load()"
+    src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ></script>
 
   <script>
     window.addEventListener('load', async () => {
-      await Clerk.load();
-      
-      const signUpDiv = document.getElementById('sign-up');
-      
-      Clerk.mountSignUp(signUpDiv, {
-        afterSignUpUrl: '/pages/dashboard.html',
-        redirectUrl: '/pages/dashboard.html'
-      });
+      if (window.Clerk) {
+        await window.Clerk.load();
+        
+        // Mount the sign-up component
+        const signUpDiv = document.getElementById('clerk-signup');
+        window.Clerk.mountSignUp(signUpDiv, {
+          redirectUrl: '/dashboard-static.html',
+          signInUrl: '/signin.html'
+        });
+      }
     });
   </script>
+
 </body>
 </html>
