@@ -7,19 +7,6 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Clerk Authentication - MUST LOAD FIRST -->
-  <script>
-    // This will be replaced with your actual Clerk publishable key
-    window.CLERK_PUBLISHABLE_KEY = 'YOUR_CLERK_PUBLISHABLE_KEY_HERE';
-  </script>
-  <script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="YOUR_CLERK_PUBLISHABLE_KEY_HERE"
-    src="https://accounts.clerk.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-    type="text/javascript"
-  ></script>
 </head>
 <body class="bg-red-50 min-h-screen">
 
@@ -155,7 +142,7 @@
         </div>
       </div>
 
-      <!-- Recent Activity (Placeholder) -->
+      <!-- Recent Activity -->
       <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-900">
         <h3 class="text-2xl font-bold text-gray-800 mb-6">Recent Flows</h3>
         
@@ -168,38 +155,45 @@
 
   </div>
 
-  <!-- JavaScript -->
-  <script>
-    let clerkInstance;
-    let userData = null;
+  <!-- Load Clerk BEFORE any other scripts -->
+  <script
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmlyZC0yNy5jbGVyay5hY2NvdW50cy5kZXYk"
+    src="https://clerk.com/clerk.browser.js"
+    type="text/javascript"
+  ></script>
 
-    // Initialize Clerk when ready
-    window.addEventListener('load', async () => {
+  <!-- Dashboard JavaScript - Runs AFTER Clerk loads -->
+  <script>
+    // Wait for Clerk to be fully loaded
+    window.addEventListener('load', function() {
+      // Give Clerk extra time to initialize
+      setTimeout(initializeDashboard, 500);
+    });
+
+    async function initializeDashboard() {
       try {
-        // Wait for Clerk to load
-        if (window.Clerk) {
-          clerkInstance = window.Clerk;
-        } else {
-          // Wait for Clerk script to load
-          await new Promise((resolve) => {
-            const checkClerk = setInterval(() => {
-              if (window.Clerk) {
-                clerkInstance = window.Clerk;
-                clearInterval(checkClerk);
-                resolve();
-              }
-            }, 100);
-          });
+        console.log('Initializing dashboard...');
+        
+        // Check if Clerk is available
+        if (typeof Clerk === 'undefined') {
+          throw new Error('Clerk failed to load. Please refresh the page.');
         }
 
-        await clerkInstance.load();
+        console.log('Clerk loaded successfully');
+
+        // Initialize Clerk
+        const clerk = new Clerk('pk_test_dm9jYWwtc3VuYmlyZC0yNy5jbGVyay5hY2NvdW50cy5kZXYk');
+        await clerk.load();
+
+        console.log('Clerk initialized');
 
         // Check if user is signed in
-        if (clerkInstance.user) {
-          // User is authenticated
-          await loadDashboard();
+        if (clerk.user) {
+          console.log('User is authenticated');
+          await loadDashboard(clerk);
         } else {
-          // Redirect to sign in
+          console.log('User not authenticated, redirecting...');
           window.location.href = '/pages/signin.html';
         }
 
@@ -209,72 +203,107 @@
           <div class="text-center py-20">
             <p class="text-red-600 font-semibold mb-4">Error loading dashboard</p>
             <p class="text-gray-600 mb-6">${error.message}</p>
-            <a href="/pages/signin.html" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700">
+            <a href="/pages/signin.html" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 inline-block">
               Sign In Again
             </a>
           </div>
         `;
       }
-    });
+    }
 
-    async function loadDashboard() {
+    async function loadDashboard(clerk) {
       try {
-        // Get user data from Clerk
-        const user = clerkInstance.user;
+        const user = clerk.user;
         
         // Update UI with user data
-        document.getElementById('userName').textContent = user.firstName || user.emailAddresses[0].emailAddress.split('@')[0];
-        document.getElementById('accountEmail').textContent = user.emailAddresses[0].emailAddress;
+        document.getElementById('userName').textContent = 
+          user.firstName || user.emailAddresses[0].emailAddress.split('@')[0];
+        document.getElementById('accountEmail').textContent = 
+          user.emailAddresses[0].emailAddress;
 
-        // Fetch user's subscription data from your database
-        const response = await fetch('/api/user/subscription', {
-          headers: {
-            'Authorization': `Bearer ${await clerkInstance.session.getToken()}`
+        // Try to fetch user's subscription data from database
+        try {
+          const token = await clerk.session.getToken();
+          const response = await fetch('/api/user/subscription', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            
+            // Update tier display
+            document.getElementById('currentTier').textContent = userData.tier || 'Free';
+            
+            // Update usage
+            document.getElementById('flowsUsed').textContent = userData.flowsThisMonth || 0;
+            
+            // Update limit based on tier
+            const limits = {
+              'Free': 3,
+              'Pro': 50,
+              'Enterprise': '∞'
+            };
+            document.getElementById('flowsLimit').textContent = limits[userData.tier] || 3;
+
+            // Show/hide upgrade button
+            if (userData.tier === 'Free') {
+              document.getElementById('upgradeBtn').classList.remove('hidden');
+            } else {
+              document.getElementById('manageSubBtn').classList.remove('hidden');
+            }
+
+            // Display recent flows if any
+            if (userData.recentFlows && userData.recentFlows.length > 0) {
+              displayRecentFlows(userData.recentFlows);
+            }
           }
-        });
-
-        if (response.ok) {
-          userData = await response.json();
-          
-          // Update tier display
-          document.getElementById('currentTier').textContent = userData.tier || 'Free';
-          
-          // Update usage
-          document.getElementById('flowsUsed').textContent = userData.flowsThisMonth || 0;
-          
-          // Update limit based on tier
-          const limits = {
-            'Free': 3,
-            'Pro': 50,
-            'Enterprise': '∞'
-          };
-          document.getElementById('flowsLimit').textContent = limits[userData.tier] || 3;
-
-          // Show/hide upgrade button based on tier
-          if (userData.tier === 'Free') {
-            document.getElementById('upgradeBtn').classList.remove('hidden');
-          } else {
-            document.getElementById('manageSubBtn').classList.remove('hidden');
-          }
-
-          // Load recent flows if any
-          if (userData.recentFlows && userData.recentFlows.length > 0) {
-            displayRecentFlows(userData.recentFlows);
-          }
-        } else {
-          // User exists in Clerk but not in database yet - that's okay for new users
-          console.log('New user - setting up defaults');
+        } catch (apiError) {
+          console.log('API fetch failed (user might be new):', apiError);
+          // Show defaults for new users
+          document.getElementById('upgradeBtn').classList.remove('hidden');
         }
 
         // Show dashboard, hide loading
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('dashboardContent').classList.remove('hidden');
 
+        // Set up sign out button
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+          await clerk.signOut();
+          window.location.href = '/';
+        });
+
+        // Set up manage subscription button
+        document.getElementById('manageSubBtn').addEventListener('click', async () => {
+          try {
+            const token = await clerk.session.getToken();
+            const response = await fetch('/api/stripe/create-portal-session', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.ok) {
+              const { url } = await response.json();
+              window.location.href = url;
+            } else {
+              alert('Unable to open subscription management. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Error opening portal:', error);
+            alert('Unable to open subscription management. Please try again.');
+          }
+        });
+
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        // Still show dashboard with defaults even if API fails
+        // Still show dashboard with defaults
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('dashboardContent').classList.remove('hidden');
+        document.getElementById('upgradeBtn').classList.remove('hidden');
       }
     }
 
@@ -292,30 +321,6 @@
         </div>
       `).join('');
     }
-
-    // Sign out handler
-    document.getElementById('signOutBtn').addEventListener('click', async () => {
-      if (clerkInstance) {
-        await clerkInstance.signOut();
-        window.location.href = '/';
-      }
-    });
-
-    // Manage subscription handler
-    document.getElementById('manageSubBtn').addEventListener('click', async () => {
-      // Create Stripe customer portal session
-      const response = await fetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${await clerkInstance.session.getToken()}`
-        }
-      });
-      
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
-      }
-    });
 
   </script>
 
