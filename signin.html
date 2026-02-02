@@ -55,8 +55,9 @@
       padding: 3rem;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       border: 2px solid #1f2937;
-      max-width: 400px;
+      max-width: 500px;
       width: 100%;
+      min-height: 500px;
     }
     h2 {
       text-align: center;
@@ -64,8 +65,44 @@
       margin-bottom: 2rem;
       font-size: 28px;
     }
-    #clerk-signin {
-      min-height: 400px;
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 2rem;
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #dc2626;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      background: #fee;
+      border: 1px solid #fcc;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      color: #c33;
+    }
+    .btn {
+      display: inline-block;
+      background: #dc2626;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #b91c1c;
     }
   </style>
 </head>
@@ -73,54 +110,31 @@
 
   <nav>
     <div class="nav-content">
-      <div class="logo">GF</div>
-      <div class="title">GET FLOWING, EH</div>
+      <a href="/" style="display: flex; align-items: center; gap: 1rem; text-decoration: none;">
+        <div class="logo">GF</div>
+        <div class="title">GET FLOWING, EH</div>
+      </a>
     </div>
   </nav>
 
   <div class="container">
     <div class="card">
       <h2>Welcome Back!</h2>
-      <div id="clerk-signin"></div>
+      <div id="clerk-signin">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading sign in...</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Clerk Script with correct key -->
-  <script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk"
-    src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-    onload="initClerk()"
-  ></script>
-
   <script>
-    window.initClerk = async function() {
-      try {
-        if (!window.Clerk) {
-          console.error('Clerk not loaded');
-          return;
-        }
-
-        await window.Clerk.load();
-        
-        const signInDiv = document.getElementById('clerk-signin');
-        
-        if (window.Clerk.mountSignIn) {
-          window.Clerk.mountSignIn(signInDiv, {
-            afterSignInUrl: '/dashboard-static.html',
-            signUpUrl: '/signup.html'
-          });
-        } else {
-          // Fallback: redirect to hosted page
-          window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-in';
-        }
-      } catch (error) {
-        console.error('Clerk initialization error:', error);
-        document.getElementById('clerk-signin').innerHTML = 
-          '<div style="text-align: center; padding: 2rem;"><p style="color: #dc2626; margin-bottom: 1rem;">Unable to load sign-in form.</p><a href="https://vocal-sunbeam-28.clerk.accounts.dev/sign-in" style="color: #dc2626; text-decoration: underline;">Click here to sign in</a></div>';
-      }
-    };
+    // Immediately redirect to Clerk's hosted page since embedding doesn't work reliably
+    setTimeout(() => {
+      const redirectUrl = encodeURIComponent(window.location.origin + '/dashboard-static.html');
+      window.location.href = 'https://vocal-sunbeam-28.clerk.accounts.dev/sign-in?redirect_url=' + redirectUrl;
+    }, 1000);
   </script>
 
 </body>
