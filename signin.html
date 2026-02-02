@@ -43,11 +43,51 @@
     <h2>Redirecting to Sign In...</h2>
     <div class="spinner"></div>
     <p style="color: #666;">Taking you to secure authentication...</p>
+    <div id="clerk-signin" style="margin-top: 2rem;"></div>
   </div>
 
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk"
+    src="https://vocal-sunbeam-28.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ></script>
+
   <script>
-    // Redirect to Clerk WITHOUT redirect_url - let Clerk use its default
-    window.location.href = 'https://vocal-sunbeam-28.accounts.dev/sign-in';
+    window.addEventListener('load', async function () {
+      // Wait for Clerk to be available
+      let attempts = 0;
+      while (!window.Clerk && attempts < 50) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+
+      if (window.Clerk) {
+        try {
+          await window.Clerk.load();
+          
+          // Check if already signed in
+          if (window.Clerk.user) {
+            window.location.href = '/welcome.html';
+            return;
+          }
+
+          // Mount sign-in component
+          const div = document.getElementById('clerk-signin');
+          if (div && window.Clerk.mountSignIn) {
+            div.innerHTML = ''; // Clear loading message
+            window.Clerk.mountSignIn(div, {
+              afterSignInUrl: '/welcome.html',
+              signUpUrl: '/signup.html'
+            });
+          }
+        } catch (error) {
+          console.error('Clerk error:', error);
+          document.getElementById('clerk-signin').innerHTML = 
+            '<p style="color: #dc2626; text-align: center;">Unable to load sign-in. <a href="https://vocal-sunbeam-28.accounts.dev/sign-in" style="color: #dc2626; text-decoration: underline;">Click here to sign in</a></p>';
+        }
+      }
+    });
   </script>
 </body>
 </html>
