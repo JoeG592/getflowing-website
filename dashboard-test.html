@@ -71,26 +71,33 @@
       try {
         document.getElementById('status').textContent = 'Initializing Clerk...';
         
-        if (typeof Clerk === 'undefined') {
-          throw new Error('Clerk object not found');
+        // Wait for window.Clerk to be available
+        let attempts = 0;
+        while (typeof window.Clerk === 'undefined' && attempts < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        if (typeof window.Clerk === 'undefined') {
+          throw new Error('Clerk failed to load after waiting');
         }
 
         document.getElementById('status').textContent = 'Loading authentication...';
         
-        const clerk = new Clerk(CLERK_PUBLISHABLE_KEY);
-        await clerk.load();
+        // Clerk is now available on window.Clerk - just use it directly
+        await window.Clerk.load();
 
         document.getElementById('status').textContent = 'Checking authentication...';
 
-        if (clerk.user) {
+        if (window.Clerk.user) {
           // User is signed in
           document.getElementById('status').textContent = '✅ Authenticated!';
           document.getElementById('user-info').classList.remove('hidden');
-          document.getElementById('user-email').textContent = clerk.user.emailAddresses[0].emailAddress;
+          document.getElementById('user-email').textContent = window.Clerk.user.emailAddresses[0].emailAddress;
           
           // Set up sign out
           document.getElementById('signout').onclick = async () => {
-            await clerk.signOut();
+            await window.Clerk.signOut();
             window.location.href = '/';
           };
           
