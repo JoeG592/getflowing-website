@@ -3,231 +3,321 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Get Flowing, eh</title>
+  <title>Dashboard - Get Flowing</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Clerk -->
-  <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_dm9jYWwtc3VuYmVhbS0yOC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://vocal-sunbeam-28.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  
+  <!-- Clerk Authentication - MUST LOAD FIRST -->
+  <script>
+    // This will be replaced with your actual Clerk publishable key
+    window.CLERK_PUBLISHABLE_KEY = 'YOUR_CLERK_PUBLISHABLE_KEY_HERE';
+  </script>
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="YOUR_CLERK_PUBLISHABLE_KEY_HERE"
+    src="https://accounts.clerk.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
 </head>
-<body>
-  <div id="root"></div>
+<body class="bg-red-50 min-h-screen">
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-
-    function Dashboard() {
-      const [user, setUser] = useState(null);
-      const [usage, setUsage] = useState({ tier: 'free', used: 0, limit: 3, remaining: 3 });
-      const [loading, setLoading] = useState(true);
-
-      useEffect(() => {
-        initClerk();
-      }, []);
-
-      const initClerk = async () => {
-        await Clerk.load();
+  <!-- Navigation -->
+  <nav class="bg-white border-b border-gray-900 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-slate-600 rounded-xl flex items-center justify-center">
+            <span class="text-white text-2xl font-bold">GF</span>
+          </div>
+          <h1 class="text-2xl font-bold text-red-600">GET FLOWING, EH</h1>
+        </div>
         
-        if (!Clerk.user) {
-          window.location.href = '/pages/signin.html';
-          return;
+        <!-- Navigation Links -->
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+            Home
+          </a>
+          <a href="/pricing.html" class="text-gray-700 hover:text-red-600 font-medium transition-colors">
+            Pricing
+          </a>
+          <a href="/pages/dashboard.html" class="text-red-600 font-bold">
+            Dashboard
+          </a>
+          <button id="signOutBtn" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-20">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      <p class="mt-4 text-gray-600">Loading your dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content (Hidden until loaded) -->
+    <div id="dashboardContent" class="hidden">
+      
+      <!-- Welcome Section -->
+      <div class="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">
+          Welcome back, <span id="userName">User</span>! 👋
+        </h2>
+        <p class="text-gray-600">
+          Ready to automate your workflow?
+        </p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Current Plan -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Current Plan</h3>
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+              <span class="text-red-600 text-xl">💎</span>
+            </div>
+          </div>
+          <p id="currentTier" class="text-3xl font-bold text-red-600 mb-2">Free</p>
+          <p class="text-sm text-gray-600">3 flows per month</p>
+        </div>
+
+        <!-- Flows This Month -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Flows Generated</h3>
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span class="text-blue-600 text-xl">⚡</span>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mb-2">
+            <span id="flowsUsed">0</span> / <span id="flowsLimit">3</span>
+          </p>
+          <p class="text-sm text-gray-600">This month</p>
+        </div>
+
+        <!-- Account Status -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Account Status</h3>
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <span class="text-green-600 text-xl">✓</span>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-green-600 mb-2">Active</p>
+          <p class="text-sm text-gray-600" id="accountEmail">user@example.com</p>
+        </div>
+
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-2xl p-8 mb-8 shadow-sm border border-gray-900">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Generate Flow Button -->
+          <a href="/" class="bg-red-600 text-white p-6 rounded-xl hover:bg-red-700 transition-colors border border-gray-900 flex items-center justify-between group">
+            <div>
+              <h4 class="text-xl font-bold mb-2">Generate New Flow</h4>
+              <p class="text-red-100">Create automation from natural language</p>
+            </div>
+            <span class="text-3xl group-hover:translate-x-2 transition-transform">→</span>
+          </a>
+
+          <!-- Upgrade Button (shown only for Free tier) -->
+          <a id="upgradeBtn" href="/pricing.html" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-colors border border-gray-900 flex items-center justify-between group hidden">
+            <div>
+              <h4 class="text-xl font-bold mb-2">Upgrade to Pro</h4>
+              <p class="text-purple-100">50 flows/month + priority support</p>
+            </div>
+            <span class="text-3xl group-hover:translate-x-2 transition-transform">💫</span>
+          </a>
+
+          <!-- Manage Subscription (shown only for paid tiers) -->
+          <button id="manageSubBtn" class="bg-gray-100 text-gray-800 p-6 rounded-xl hover:bg-gray-200 transition-colors border border-gray-900 flex items-center justify-between group hidden">
+            <div>
+              <h4 class="text-xl font-bold mb-2">Manage Subscription</h4>
+              <p class="text-gray-600">Update billing and payment info</p>
+            </div>
+            <span class="text-3xl group-hover:translate-x-2 transition-transform">⚙️</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Recent Activity (Placeholder) -->
+      <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-900">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Recent Flows</h3>
+        
+        <div id="recentFlows" class="space-y-4">
+          <p class="text-gray-600 text-center py-8">No flows generated yet. Create your first one!</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    let clerkInstance;
+    let userData = null;
+
+    // Initialize Clerk when ready
+    window.addEventListener('load', async () => {
+      try {
+        // Wait for Clerk to load
+        if (window.Clerk) {
+          clerkInstance = window.Clerk;
+        } else {
+          // Wait for Clerk script to load
+          await new Promise((resolve) => {
+            const checkClerk = setInterval(() => {
+              if (window.Clerk) {
+                clerkInstance = window.Clerk;
+                clearInterval(checkClerk);
+                resolve();
+              }
+            }, 100);
+          });
         }
 
-        setUser(Clerk.user);
-        
-        // TODO: Fetch actual usage from backend
-        // For now, using mock data
-        setUsage({
-          tier: 'free',
-          used: 0,
-          limit: 3,
-          remaining: 3
-        });
-        
-        setLoading(false);
-      };
+        await clerkInstance.load();
 
-      const handleSignOut = async () => {
-        await Clerk.signOut();
-        window.location.href = '/';
-      };
+        // Check if user is signed in
+        if (clerkInstance.user) {
+          // User is authenticated
+          await loadDashboard();
+        } else {
+          // Redirect to sign in
+          window.location.href = '/pages/signin.html';
+        }
 
-      const handleUpgrade = async () => {
-        // Redirect to pricing
-        window.location.href = '/pages/pricing.html';
-      };
-
-      if (loading) {
-        return (
-          <div className="min-h-screen bg-red-50 flex items-center justify-center">
-            <div className="text-2xl font-bold text-gray-600">Loading...</div>
+      } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        document.getElementById('loading').innerHTML = `
+          <div class="text-center py-20">
+            <p class="text-red-600 font-semibold mb-4">Error loading dashboard</p>
+            <p class="text-gray-600 mb-6">${error.message}</p>
+            <a href="/pages/signin.html" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700">
+              Sign In Again
+            </a>
           </div>
-        );
+        `;
       }
+    });
 
-      const tierLimits = {
-        free: 3,
-        pro: 50,
-        enterprise: 999999
-      };
+    async function loadDashboard() {
+      try {
+        // Get user data from Clerk
+        const user = clerkInstance.user;
+        
+        // Update UI with user data
+        document.getElementById('userName').textContent = user.firstName || user.emailAddresses[0].emailAddress.split('@')[0];
+        document.getElementById('accountEmail').textContent = user.emailAddresses[0].emailAddress;
 
-      const usagePercentage = (usage.used / usage.limit) * 100;
+        // Fetch user's subscription data from your database
+        const response = await fetch('/api/user/subscription', {
+          headers: {
+            'Authorization': `Bearer ${await clerkInstance.session.getToken()}`
+          }
+        });
 
-      return (
-        <div className="min-h-screen bg-red-50">
-          {/* Header */}
-          <div className="bg-white border-b border-gray-900">
-            <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">GF</span>
-                </div>
-                <span className="text-2xl font-bold text-red-600">GET FLOWING, EH</span>
-              </div>
-              <nav className="flex gap-6 items-center">
-                <a href="/" className="text-gray-700 hover:text-red-600 font-medium">Home</a>
-                <a href="/pages/pricing.html" className="text-gray-700 hover:text-red-600 font-medium">Pricing</a>
-                <a href="/pages/dashboard.html" className="text-red-600 font-bold">Dashboard</a>
-                <button onClick={handleSignOut} className="text-gray-700 hover:text-red-600 font-medium">
-                  Sign Out
-                </button>
-              </nav>
-            </div>
-          </div>
+        if (response.ok) {
+          userData = await response.json();
+          
+          // Update tier display
+          document.getElementById('currentTier').textContent = userData.tier || 'Free';
+          
+          // Update usage
+          document.getElementById('flowsUsed').textContent = userData.flowsThisMonth || 0;
+          
+          // Update limit based on tier
+          const limits = {
+            'Free': 3,
+            'Pro': 50,
+            'Enterprise': '∞'
+          };
+          document.getElementById('flowsLimit').textContent = limits[userData.tier] || 3;
 
-          {/* Main Content */}
-          <div className="max-w-7xl mx-auto px-8 py-12">
-            {/* Welcome Section */}
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Welcome back, {user?.firstName || 'there'}! 👋
-              </h1>
-              <p className="text-gray-600">Manage your flows and subscription</p>
-            </div>
+          // Show/hide upgrade button based on tier
+          if (userData.tier === 'Free') {
+            document.getElementById('upgradeBtn').classList.remove('hidden');
+          } else {
+            document.getElementById('manageSubBtn').classList.remove('hidden');
+          }
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              {/* Usage Card */}
-              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Monthly Usage</h3>
-                  <span className="text-2xl">📊</span>
-                </div>
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-gray-900">{usage.used}</span>
-                    <span className="text-gray-600">/ {usage.limit} flows</span>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                  <div 
-                    className={`h-3 rounded-full ${usagePercentage > 80 ? 'bg-red-600' : 'bg-green-600'}`}
-                    style={{ width: `${usagePercentage}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600">{usage.remaining} flows remaining this month</p>
-              </div>
+          // Load recent flows if any
+          if (userData.recentFlows && userData.recentFlows.length > 0) {
+            displayRecentFlows(userData.recentFlows);
+          }
+        } else {
+          // User exists in Clerk but not in database yet - that's okay for new users
+          console.log('New user - setting up defaults');
+        }
 
-              {/* Plan Card */}
-              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Current Plan</h3>
-                  <span className="text-2xl">💎</span>
-                </div>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-red-600 uppercase">{usage.tier}</span>
-                </div>
-                {usage.tier === 'free' && (
-                  <button 
-                    onClick={handleUpgrade}
-                    className="w-full bg-red-600 text-white py-2 px-4 rounded-xl font-bold hover:bg-red-700 transition-all"
-                  >
-                    Upgrade to Pro
-                  </button>
-                )}
-                {usage.tier !== 'free' && (
-                  <p className="text-sm text-gray-600">Next billing: Feb 28, 2026</p>
-                )}
-              </div>
+        // Show dashboard, hide loading
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
 
-              {/* Quick Actions */}
-              <div className="bg-white rounded-2xl border-2 border-gray-900 p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
-                  <span className="text-2xl">⚡</span>
-                </div>
-                <div className="space-y-3">
-                  <a 
-                    href="/"
-                    className="block w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all text-center border border-gray-900"
-                  >
-                    Generate Flow
-                  </a>
-                  <a 
-                    href="/pages/pricing.html"
-                    className="block w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all text-center border border-gray-900"
-                  >
-                    View Pricing
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Upgrade Banner (if free tier) */}
-            {usage.tier === 'free' && usage.remaining < 2 && (
-              <div className="bg-red-600 text-white rounded-2xl p-6 mb-8 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold mb-2">⚠️ Running Low on Flows!</h3>
-                    <p className="text-red-100">
-                      You only have {usage.remaining} flow{usage.remaining !== 1 ? 's' : ''} left this month. 
-                      Upgrade to Pro for 50 flows/month!
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handleUpgrade}
-                    className="bg-white text-red-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-all whitespace-nowrap"
-                  >
-                    Upgrade Now
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-2xl border-2 border-gray-900 p-8 shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Recent Flows</h3>
-              <div className="text-center py-12 text-gray-500">
-                <span className="text-6xl mb-4 block">📭</span>
-                <p className="text-lg">No flows generated yet</p>
-                <p className="text-sm mt-2">Start by creating your first automation!</p>
-                <a 
-                  href="/"
-                  className="inline-block mt-4 bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-all"
-                >
-                  Generate Your First Flow
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-20 border-t border-gray-900 bg-white">
-            <div className="max-w-7xl mx-auto px-8 py-8 text-center">
-              <p className="text-gray-600 text-sm mb-1">
-                Proudly made in Edmonton, Alberta, Canada 🇨🇦
-              </p>
-              <p className="text-gray-500 text-xs">
-                Powered by Claude AI • Built for Power Automate
-              </p>
-            </div>
-          </div>
-        </div>
-      );
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Still show dashboard with defaults even if API fails
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
+      }
     }
 
-    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    function displayRecentFlows(flows) {
+      const container = document.getElementById('recentFlows');
+      container.innerHTML = flows.map(flow => `
+        <div class="p-4 bg-red-50 rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-semibold text-gray-800">${flow.name}</h4>
+              <p class="text-sm text-gray-600">${new Date(flow.createdAt).toLocaleDateString()}</p>
+            </div>
+            <span class="text-green-600 font-medium">✓ Generated</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Sign out handler
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      if (clerkInstance) {
+        await clerkInstance.signOut();
+        window.location.href = '/';
+      }
+    });
+
+    // Manage subscription handler
+    document.getElementById('manageSubBtn').addEventListener('click', async () => {
+      // Create Stripe customer portal session
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await clerkInstance.session.getToken()}`
+        }
+      });
+      
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      }
+    });
+
   </script>
+
 </body>
 </html>
