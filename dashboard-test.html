@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Get Flowing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-red-50 min-h-screen flex items-center justify-center">
+
+  <div id="app" class="max-w-2xl mx-auto p-8">
+    <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-900 text-center">
+      <h1 class="text-3xl font-bold text-red-600 mb-4">Dashboard Loading...</h1>
+      <div id="status" class="text-gray-600"></div>
+      <div id="user-info" class="mt-6 hidden">
+        <p class="text-xl font-semibold text-gray-800 mb-2">Welcome!</p>
+        <p id="user-email" class="text-gray-600"></p>
+        <button id="signout" class="mt-4 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clerk Frontend API -->
+  <script>
+    const CLERK_PUBLISHABLE_KEY = 'pk_test_dm9jYWwtc3VuYmlyZC0yNy5jbGVyay5hY2NvdW50cy5kZXYk';
+    
+    // Load Clerk dynamically
+    (function() {
+      const script = document.createElement('script');
+      script.setAttribute('data-clerk-publishable-key', CLERK_PUBLISHABLE_KEY);
+      script.async = true;
+      script.src = `https://${CLERK_PUBLISHABLE_KEY.split('_')[2]}.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
+      script.crossOrigin = 'anonymous';
+      
+      script.onload = function() {
+        initClerk();
+      };
+      
+      script.onerror = function() {
+        document.getElementById('status').innerHTML = 
+          '<span class="text-red-600">❌ Failed to load Clerk. Trying alternative...</span>';
+        loadClerkAlternative();
+      };
+      
+      document.head.appendChild(script);
+    })();
+
+    function loadClerkAlternative() {
+      // Try the alternative CDN
+      const script = document.createElement('script');
+      script.setAttribute('data-clerk-publishable-key', CLERK_PUBLISHABLE_KEY);
+      script.async = true;
+      script.src = 'https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js';
+      script.crossOrigin = 'anonymous';
+      
+      script.onload = function() {
+        initClerk();
+      };
+      
+      script.onerror = function() {
+        document.getElementById('status').innerHTML = 
+          '<span class="text-red-600">❌ Unable to load authentication. Please try refreshing.</span>';
+      };
+      
+      document.head.appendChild(script);
+    }
+
+    async function initClerk() {
+      try {
+        document.getElementById('status').textContent = 'Initializing Clerk...';
+        
+        if (typeof Clerk === 'undefined') {
+          throw new Error('Clerk object not found');
+        }
+
+        document.getElementById('status').textContent = 'Loading authentication...';
+        
+        const clerk = new Clerk(CLERK_PUBLISHABLE_KEY);
+        await clerk.load();
+
+        document.getElementById('status').textContent = 'Checking authentication...';
+
+        if (clerk.user) {
+          // User is signed in
+          document.getElementById('status').textContent = '✅ Authenticated!';
+          document.getElementById('user-info').classList.remove('hidden');
+          document.getElementById('user-email').textContent = clerk.user.emailAddresses[0].emailAddress;
+          
+          // Set up sign out
+          document.getElementById('signout').onclick = async () => {
+            await clerk.signOut();
+            window.location.href = '/';
+          };
+          
+          // Redirect to full dashboard after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/pages/dashboard-full.html';
+          }, 2000);
+        } else {
+          // Not signed in - redirect to sign in
+          document.getElementById('status').textContent = 'Not signed in. Redirecting...';
+          setTimeout(() => {
+            window.location.href = '/pages/signin.html';
+          }, 1000);
+        }
+
+      } catch (error) {
+        console.error('Clerk initialization error:', error);
+        document.getElementById('status').innerHTML = 
+          `<span class="text-red-600">❌ Error: ${error.message}</span>`;
+      }
+    }
+  </script>
+
+</body>
+</html>
