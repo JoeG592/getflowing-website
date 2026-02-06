@@ -10,6 +10,7 @@ export default async function handler(req, res) {
         'https://tenantsync.io',
         'https://www.tenantsync.io',
         'https://tenantsync-website.vercel.app',
+        'https://singularity-dashboard-alpha.vercel.app',
         'http://localhost',
         'http://127.0.0.1'
     ];
