@@ -1,11 +1,25 @@
 // api/waitlist.js
 // TenantSync Waitlist API - Collects email signups from tenantsync.io
-// No auth required - public endpoint
+// No auth required - public endpoint with bot protection
 // Authors: Joe Green and Claude AI
 
 export default async function handler(req, res) {
-    // CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS - only allow from our domains
+    const origin = req.headers.origin || '';
+    const allowedOrigins = [
+        'https://tenantsync.io',
+        'https://www.tenantsync.io',
+        'https://tenantsync-website.vercel.app',
+        'http://localhost',
+        'http://127.0.0.1'
+    ];
+    
+    if (allowedOrigins.some(o => origin.startsWith(o))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', 'https://www.tenantsync.io');
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -19,10 +33,53 @@ export default async function handler(req, res) {
 
         // POST = new signup
         if (req.method === 'POST') {
-            const { email, source } = req.body || {};
+            const { email, source, website } = req.body || {};
 
-            if (!email || !email.includes('@')) {
+            // Honeypot: if 'website' field is filled, it's a bot
+            if (website) {
+                // Silently accept to not alert the bot
+                return res.status(200).json({
+                    success: true,
+                    message: "You're on the list!"
+                });
+            }
+
+            // Reject empty or missing email
+            if (!email || typeof email !== 'string') {
                 return res.status(400).json({ error: 'Valid email required' });
+            }
+
+            // Reject absurdly long input (bot payloads)
+            if (email.length > 254) {
+                return res.status(400).json({ error: 'Valid email required' });
+            }
+
+            // Email format validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ error: 'Valid email required' });
+            }
+
+            // Block disposable email domains (common spam)
+            const disposable = ['mailinator.com', 'guerrillamail.com', 'tempmail.com', 
+                'throwaway.email', 'yopmail.com', 'sharklasers.com', 'guerrillamailblock.com',
+                'grr.la', 'dispostable.com', '10minutemail.com', 'trashmail.com'];
+            const domain = email.split('@')[1]?.toLowerCase();
+            if (disposable.includes(domain)) {
+                return res.status(400).json({ error: 'Please use a work or personal email' });
+            }
+
+            // Rate limit: max 5 signups per IP per hour
+            const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
+                || req.headers['x-real-ip'] 
+                || 'unknown';
+            const rateCheck = await sql`
+                SELECT COUNT(*) as cnt FROM ts_waitlist 
+                WHERE ip_address = ${ip} 
+                AND created_at > NOW() - INTERVAL '1 hour'
+            `;
+            if (parseInt(rateCheck[0].cnt) >= 5) {
+                return res.status(429).json({ error: 'Too many requests. Try again later.' });
             }
 
             // Normalize email
@@ -34,8 +91,8 @@ export default async function handler(req, res) {
                 VALUES (
                     ${normalizedEmail},
                     ${source || 'landing-page'},
-                    ${req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown'},
-                    ${req.headers['user-agent'] || 'unknown'}
+                    ${ip},
+                    ${(req.headers['user-agent'] || 'unknown').substring(0, 500)}
                 )
                 ON CONFLICT (email) DO UPDATE SET
                     updated_at = NOW(),
@@ -61,14 +118,23 @@ export default async function handler(req, res) {
             }
 
             const signups = await sql`
-                SELECT id, email, source, created_at, signup_count
+                SELECT id, email, source, ip_address, created_at, signup_count, contacted
                 FROM ts_waitlist
                 ORDER BY created_at DESC
                 LIMIT 100
             `;
 
+            const stats = await sql`
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN created_at > NOW() - INTERVAL '24 hours' THEN 1 END) as last_24h,
+                    COUNT(CASE WHEN created_at > NOW() - INTERVAL '7 days' THEN 1 END) as last_7d,
+                    COUNT(CASE WHEN contacted = true THEN 1 END) as contacted
+                FROM ts_waitlist
+            `;
+
             return res.status(200).json({
-                total: signups.length,
+                stats: stats[0],
                 signups
             });
         }
