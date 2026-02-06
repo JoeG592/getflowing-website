@@ -86,7 +86,19 @@ export default async function handler(req, res) {
             // Normalize email
             const normalizedEmail = email.trim().toLowerCase();
 
-            // Upsert - don't error on duplicate, just update timestamp
+            // Check if already signed up
+            const existing = await sql`
+                SELECT id, email FROM ts_waitlist WHERE email = ${normalizedEmail}
+            `;
+            if (existing.length > 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: "You're already on the list! We'll be in touch soon.",
+                    already_registered: true
+                });
+            }
+
+            // Insert new signup
             const result = await sql`
                 INSERT INTO ts_waitlist (email, source, ip_address, user_agent)
                 VALUES (
@@ -95,9 +107,6 @@ export default async function handler(req, res) {
                     ${ip},
                     ${(req.headers['user-agent'] || 'unknown').substring(0, 500)}
                 )
-                ON CONFLICT (email) DO UPDATE SET
-                    updated_at = NOW(),
-                    signup_count = ts_waitlist.signup_count + 1
                 RETURNING id, email, created_at
             `;
 
