@@ -74,14 +74,12 @@ export default async function handler(req, res) {
                 return await handleResolve(req, res, sql, customer);
             case 'ledger':
                 return await handleLedger(req, res, sql, customer);
-            case 'sync-complete':
-                return await handleSyncComplete(req, res, sql, customer);
             default:
                 return res.status(400).json({ error: 'Unknown action', validActions: [
                     'register', 'status', 'pairs', 'create-pair', 
                     'upload', 'upload-chunk', 'upload-complete',
                     'download', 'download-chunk',
-                    'conflicts', 'resolve', 'ledger', 'sync-complete'
+                    'conflicts', 'resolve', 'ledger'
                 ]});
         }
     } catch (error) {
@@ -665,93 +663,4 @@ async function handleLedger(req, res, sql, customer) {
     `;
     
     return res.status(200).json({ sync_pair_id, flows: ledger, total: ledger.length });
-}
-
-// ============================================================================
-// SYNC-COMPLETE - Desktop app reports sync results
-// ============================================================================
-async function handleSyncComplete(req, res, sql, customer) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required' });
-    }
-    
-    const { 
-        sync_pair_id, 
-        status,           // 'success' or 'failed'
-        flows_processed,  // number of flows in solution
-        flows_activated,  // number successfully activated
-        flows_skipped,    // number needing connections
-        flows_failed,     // number that errored
-        duration_seconds, // how long sync took
-        solution_name,    // which solution was synced
-        error_message,    // error details if failed
-        source_org,       // source dataverse org
-        target_org,       // target dataverse org
-        app_version       // desktop app version
-    } = req.body;
-    
-    if (!status) {
-        return res.status(400).json({ error: 'status required (success or failed)' });
-    }
-    
-    // Insert into sync_history
-    const history = await sql`
-        INSERT INTO sync_history (
-            sync_pair_id, 
-            started_at, 
-            completed_at, 
-            flows_processed, 
-            status, 
-            error_message
-        ) VALUES (
-            ${sync_pair_id || null},
-            NOW() - INTERVAL '1 second' * ${duration_seconds || 0},
-            NOW(),
-            ${flows_processed || 0},
-            ${status},
-            ${error_message || null}
-        ) RETURNING *
-    `;
-    
-    // Update sync_pairs if we have a pair_id
-    if (sync_pair_id) {
-        await sql`
-            UPDATE ts_sync_pairs 
-            SET last_sync_at = NOW(),
-                last_sync_status = ${status},
-                flows_synced = COALESCE(flows_synced, 0) + ${flows_activated || 0}
-            WHERE id = ${sync_pair_id}::uuid AND customer_id = ${customer.id}
-        `;
-    }
-    
-    // Update usage metrics
-    if (status === 'success') {
-        await sql`
-            INSERT INTO ts_usage_metrics (customer_id, date, syncs_completed, flows_synced)
-            VALUES (${customer.id}, CURRENT_DATE, 1, ${flows_activated || 0})
-            ON CONFLICT (customer_id, date) 
-            DO UPDATE SET 
-                syncs_completed = ts_usage_metrics.syncs_completed + 1,
-                flows_synced = ts_usage_metrics.flows_synced + ${flows_activated || 0}
-        `;
-    } else {
-        await sql`
-            INSERT INTO ts_usage_metrics (customer_id, date, syncs_failed)
-            VALUES (${customer.id}, CURRENT_DATE, 1)
-            ON CONFLICT (customer_id, date) 
-            DO UPDATE SET syncs_failed = ts_usage_metrics.syncs_failed + 1
-        `;
-    }
-    
-    // Audit log
-    await logAudit(sql, customer.id, sync_pair_id, 'sync_completed', {
-        status, flows_processed, flows_activated, flows_skipped, flows_failed,
-        duration_seconds, solution_name, source_org, target_org, app_version
-    });
-    
-    return res.status(200).json({ 
-        success: true, 
-        history_id: history[0]?.id,
-        message: `Sync ${status} recorded`
-    });
 }
