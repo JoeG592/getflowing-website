@@ -668,60 +668,90 @@ async function handleLedger(req, res, sql, customer) {
 }
 
 // ============================================================================
-// SYNC-COMPLETE - FullRun reports results after migration
+// SYNC-COMPLETE - Desktop app reports sync results
 // ============================================================================
 async function handleSyncComplete(req, res, sql, customer) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'POST required' });
     }
     
-    const { sync_pair_id, flows_synced, flows_skipped, flows_failed, total_flows,
-            connections_mapped, connection_refs_created, duration_minutes, version, errors } = req.body;
+    const { 
+        sync_pair_id, 
+        status,           // 'success' or 'failed'
+        flows_processed,  // number of flows in solution
+        flows_activated,  // number successfully activated
+        flows_skipped,    // number needing connections
+        flows_failed,     // number that errored
+        duration_seconds, // how long sync took
+        solution_name,    // which solution was synced
+        error_message,    // error details if failed
+        source_org,       // source dataverse org
+        target_org,       // target dataverse org
+        app_version       // desktop app version
+    } = req.body;
     
-    if (!sync_pair_id) {
-        return res.status(400).json({ error: 'sync_pair_id required' });
+    if (!status) {
+        return res.status(400).json({ error: 'status required (success or failed)' });
     }
     
-    // Update sync pair: flows_synced, last_sync_at, status
-    const pair = await sql`
-        UPDATE ts_sync_pairs 
-        SET flows_synced = ${flows_synced || 0},
-            last_sync_at = NOW(),
-            status = ${(errors && errors.length > 0) ? 'error' : 'active'}
-        WHERE id = ${sync_pair_id}::uuid AND customer_id = ${customer.id}
-        RETURNING *
+    // Insert into sync_history
+    const history = await sql`
+        INSERT INTO sync_history (
+            sync_pair_id, 
+            started_at, 
+            completed_at, 
+            flows_processed, 
+            status, 
+            error_message
+        ) VALUES (
+            ${sync_pair_id || null},
+            NOW() - INTERVAL '1 second' * ${duration_seconds || 0},
+            NOW(),
+            ${flows_processed || 0},
+            ${status},
+            ${error_message || null}
+        ) RETURNING *
     `;
     
-    if (pair.length === 0) {
-        return res.status(404).json({ error: 'Sync pair not found' });
+    // Update sync_pairs if we have a pair_id
+    if (sync_pair_id) {
+        await sql`
+            UPDATE ts_sync_pairs 
+            SET last_sync_at = NOW(),
+                last_sync_status = ${status},
+                flows_synced = COALESCE(flows_synced, 0) + ${flows_activated || 0}
+            WHERE id = ${sync_pair_id}::uuid AND customer_id = ${customer.id}
+        `;
     }
     
     // Update usage metrics
-    const syncSuccess = (!errors || errors.length === 0) ? 1 : 0;
-    const syncFailed = (errors && errors.length > 0) ? 1 : 0;
-    
-    await sql`
-        INSERT INTO ts_usage_metrics (customer_id, date, syncs_completed, syncs_failed, flows_synced)
-        VALUES (${customer.id}, CURRENT_DATE, ${syncSuccess}, ${syncFailed}, ${flows_synced || 0})
-        ON CONFLICT (customer_id, date) 
-        DO UPDATE SET 
-            syncs_completed = ts_usage_metrics.syncs_completed + ${syncSuccess},
-            syncs_failed = ts_usage_metrics.syncs_failed + ${syncFailed},
-            flows_synced = ts_usage_metrics.flows_synced + ${flows_synced || 0}
-    `;
+    if (status === 'success') {
+        await sql`
+            INSERT INTO ts_usage_metrics (customer_id, date, syncs_completed, flows_synced)
+            VALUES (${customer.id}, CURRENT_DATE, 1, ${flows_activated || 0})
+            ON CONFLICT (customer_id, date) 
+            DO UPDATE SET 
+                syncs_completed = ts_usage_metrics.syncs_completed + 1,
+                flows_synced = ts_usage_metrics.flows_synced + ${flows_activated || 0}
+        `;
+    } else {
+        await sql`
+            INSERT INTO ts_usage_metrics (customer_id, date, syncs_failed)
+            VALUES (${customer.id}, CURRENT_DATE, 1)
+            ON CONFLICT (customer_id, date) 
+            DO UPDATE SET syncs_failed = ts_usage_metrics.syncs_failed + 1
+        `;
+    }
     
     // Audit log
     await logAudit(sql, customer.id, sync_pair_id, 'sync_completed', {
-        flows_synced, flows_skipped, flows_failed, total_flows,
-        connections_mapped, connection_refs_created,
-        duration_minutes, version,
-        error_count: errors?.length || 0
+        status, flows_processed, flows_activated, flows_skipped, flows_failed,
+        duration_seconds, solution_name, source_org, target_org, app_version
     });
     
-    return res.status(200).json({
-        success: true,
-        flows_synced: flows_synced || 0,
-        pair_status: pair[0].status,
-        message: `Sync recorded: ${flows_synced || 0} flows synced`
+    return res.status(200).json({ 
+        success: true, 
+        history_id: history[0]?.id,
+        message: `Sync ${status} recorded`
     });
 }
